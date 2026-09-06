@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Market Terminal</title>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="terminal-layout">
+        <header class="terminal-header">
+            <div class="logo">
+                <span class="pulse"></span> QUANT_TERMINAL //
+            </div>
+            <div class="status-bar">
+                <span id="market-status" class="status-indicator online">Market Open</span>
+                <span id="clock" class="clock">00:00:00 UTC</span>
+            </div>
+        </header>
+
+        <main class="dashboard-grid">
+            <!-- Sidebar Panel -->
+            <aside class="panel controls-panel">
+                <div class="panel-header">
+                    <h2>ASSET SELECTOR</h2>
+                </div>
+                <div class="panel-content">
+                    <div class="asset-selector">
+                        <button class="asset-btn active" data-symbol="IBM">IBM (Equity)</button>
+                        <button class="asset-btn" data-symbol="AAPL">AAPL (Equity)</button>
+                        <!-- Alpha vantage demo key mainly supports IBM, using it to ensure it works without a key -->
+                    </div>
+                    
+                    <div class="market-metrics">
+                        <div class="metric-box">
+                            <span class="metric-label">CURRENT PRICE</span>
+                            <span class="metric-value" id="current-price">---</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">24H CHANGE</span>
+                            <span class="metric-value" id="price-change">---</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Chart Panel -->
+            <section class="panel chart-panel">
+                <div class="panel-header">
+                    <h2 id="chart-title">MARKET CHART // IBM</h2>
+                    <div class="chart-tools">
+                        <span class="badge" id="data-status">Connecting...</span>
+                    </div>
+                </div>
+                <div class="chart-container" id="tv-chart">
+                    <!-- Lightweight Charts will render here -->
+                </div>
+            </section>
+
+            <!-- News Feed Panel -->
+            <section class="panel news-panel">
+                <div class="panel-header">
+                    <h2>MARKET INTELLIGENCE</h2>
+                </div>
+                <div class="news-feed" id="news-container">
+                    <div class="loading-spinner"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- TradingView Lightweight Charts (local) -->
+    <script src="{{ url_for('static', filename='js/vendor/lightweight-charts.js') }}"></script>
+    <!-- Custom Application Logic -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
