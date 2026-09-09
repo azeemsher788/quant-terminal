@@ -5,4 +5,4 @@ Flask-Talisman>=1.1.0
 requests>=2.31.0
 python-dotenv>=1.0.0
 gunicorn>=21.2.0
-tenacity>=8.2.3
+tenacity>=8.2.0
