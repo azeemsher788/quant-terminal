@@ -41,7 +41,10 @@ def test_get_historical_data_rate_limit(app):
             responses.GET,
             "https://www.alphavantage.co/query",
             json={
-                "Information": "Thank you for using Alpha Vantage! Our standard API call frequency is 5 calls per minute and 500 calls per day."
+                "Information": (
+                    "Thank you for using Alpha Vantage! "
+                    "Our standard API call frequency is 5 calls per minute and 500 calls per day."
+                )
             },
             status=200,
         )
