@@ -1,4 +1,4 @@
-# Quant Terminal: Real-Time Financial Market Dashboard
+# Quant Terminal
 
 ![Quant Terminal Interface](preview.png)
 
@@ -6,44 +6,45 @@
 
 Quant Terminal is a production-grade, highly polished web application demonstrating complex API consumption, server-side caching, and advanced front-end data visualization. Built for the modern web, it features a bespoke financial terminal aesthetic inspired by Bloomberg Terminal, blending dark mode, sleek typography, and high-performance interactive charting.
 
-This project was built to showcase full-stack proficiency, focusing on building resilient API integrations and crafting specialized, non-generic user interfaces.
+This project goes beyond a simple tutorial clone by addressing real-world software engineering concerns: robust error handling, API rate limiting, separation of concerns through an application factory pattern, comprehensive test coverage, and production-ready containerization.
+
+## Problem Solved
+
+Financial data APIs (like Alpha Vantage) impose strict rate limits and can be slow. Direct client-side consumption risks exposing API keys and easily hitting limits. Quant Terminal solves this by providing a resilient backend proxy layer that caches responses, normalizes complex nested JSON, handles timeouts gracefully, and serves a high-performance interactive UI.
 
 ## Key Features
 
-- **Robust REST API Integration:** Securely consumes external financial APIs (Alpha Vantage) using Python's `requests` module, with keys kept completely isolated from the front-end via environment variables.
-- **Server-Side Data Caching:** Implements `Flask-Caching` to handle strict rate limits imposed by public APIs, significantly reducing latency and ensuring high availability during API outages.
-- **Advanced Error Handling:** Gracefully handles and propagates HTTP 429 (Too Many Requests), 500 (Internal Server Error), and network timeouts, providing clear visual feedback to the user.
-- **Bespoke UI/UX Design:** Avoids generic templates in favor of a custom, Vanilla CSS/JS dark-mode terminal layout featuring monospaced fonts for numerical accuracy and semantic markup.
-- **High-Performance Visualization:** Integrates TradingView's Lightweight Charts via Canvas API for butter-smooth time-series financial data rendering (candlestick charts).
-- **PEP-484 Compliance:** Fully type-hinted Python backend architecture.
+- **Robust REST API Integration:** Securely consumes the Alpha Vantage API. API keys are completely isolated from the front-end via environment variables.
+- **Server-Side Data Caching:** Implements declarative `@cache.cached()` with `Flask-Caching` to handle strict rate limits imposed by public APIs, significantly reducing latency and boilerplate code.
+- **External API Resilience:** Integrates `tenacity` for exponential backoff and retry logic, enabling the service to transparently recover from transient network errors and third-party rate limits.
+- **Strict Request Validation:** Employs a dedicated validation module to parse, clean, and validate all incoming query parameters and inputs, enforcing the Single Responsibility Principle.
+- **Advanced Error Handling:** Gracefully handles and propagates HTTP 429 (Too Many Requests), 500 (Internal Server Error), and network timeouts, providing clear visual feedback to the user via custom error handlers.
+- **High-Performance Visualization:** Integrates TradingView's Lightweight Charts via Canvas API for butter-smooth time-series financial data rendering.
+- **Security Best Practices:** Employs `Flask-Limiter` for endpoint protection and `Flask-Talisman` for HTTP security headers (CSP, HSTS).
+- **Modular Frontend Architecture:** Uses native ES6 modules (`api.js`, `chart.js`, `ui.js`) for a clean, maintainable, and dependency-free frontend logic layer.
 
-## Tech Stack
+## Technology Stack
 
-### Backend
-- **Python 3.9+**
-- **Flask:** Lightweight, scalable WSGI web application framework.
-- **Flask-Caching:** In-memory dictionary caching (easily swappable for Redis in production).
-- **Requests:** For synchronous, robust HTTP calls.
-- **python-dotenv:** Secure environment variable management.
-
-### Frontend
-- **HTML5 & CSS3:** Custom grid/flexbox layout, CSS variables for theming.
-- **Vanilla JavaScript:** ES6+ standards, Async/Await syntax for API consumption.
-- **Lightweight Charts (TradingView):** Canvas-based financial charting library.
+- **Backend:** Python 3.11, Flask, Flask-Caching, Flask-Limiter, Flask-Talisman, requests
+- **Frontend:** HTML5, Vanilla CSS3 (Custom grid/flexbox, CSS variables), Vanilla JavaScript (ES6 Modules)
+- **Charting:** TradingView Lightweight Charts
+- **Testing:** Pytest, responses (for API mocking)
+- **Infrastructure:** Docker, Gunicorn, GitHub Actions (CI)
 
 ## Architecture
 
-1. **Proxy Pattern:** The Flask backend acts as a secure proxy between the client and the Alpha Vantage API. The frontend never makes direct calls to the external provider, preventing API key exposure and CORS issues.
-2. **Caching Strategy:** Financial data (Daily Time Series) is cached on the server for 5 minutes, and news sentiment for 10 minutes. This drastically reduces outbound network requests and abides by the standard 5 requests/minute limit on free tier APIs.
-3. **Data Transformation:** The backend normalizes the deeply nested JSON payload from the provider into a streamlined array of time/OHLC objects, minimizing payload size and offloading processing overhead from the client's browser.
+1. **Application Factory Pattern:** The Flask app is instantiated via a factory (`app/__init__.py`), allowing for isolated environments (Development, Testing, Production) and making the application highly testable.
+2. **Service Layer:** Business logic (fetching and normalizing API data) is decoupled from routing. The `MarketDataService` abstracts the complexities of the external API, making the routes (`app/api/routes.py`) thin and focused on HTTP.
+3. **Caching Strategy:** Time-series data and news sentiment are cached on the server for 1 hour. This drastically reduces outbound network requests and prevents hitting the 25 requests/day limit on free tier APIs.
 
 ## Getting Started
 
 ### Prerequisites
-- Python 3.9 or higher
+- Python 3.11+
 - An Alpha Vantage API Key (Free tier is sufficient)
+- Docker (Optional, for containerized running)
 
-### Installation
+### Installation (Local)
 
 1. **Clone the repository**
    ```bash
@@ -54,7 +55,7 @@ This project was built to showcase full-stack proficiency, focusing on building 
 2. **Create a virtual environment**
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   source venv/bin/activate  # Windows: venv\Scripts\activate
    ```
 
 3. **Install dependencies**
@@ -63,7 +64,6 @@ This project was built to showcase full-stack proficiency, focusing on building 
    ```
 
 4. **Environment Setup**
-   Copy the example environment file and add your API key:
    ```bash
    cp .env.example .env
    # Edit .env and replace 'demo' with your Alpha Vantage API key
@@ -71,12 +71,30 @@ This project was built to showcase full-stack proficiency, focusing on building 
 
 5. **Run the Application**
    ```bash
-   python app.py
+   python run.py
    ```
    The application will be available at `http://localhost:5000`.
 
-## Contact & Hire
+### Running with Docker
+```bash
+docker build -t quant-terminal .
+docker run -p 5000:5000 --env-file .env quant-terminal
+```
 
-I am actively looking for freelance clients and full-time roles requiring deep expertise in Python, API integration, and front-end data visualization. 
+## Testing
 
-[Connect with me on LinkedIn](#) | [View my Portfolio](#)
+The project includes a comprehensive Pytest suite covering the service layer, error handling, and API integration.
+
+```bash
+pip install -r requirements-dev.txt
+pytest tests/
+```
+
+## Interesting Engineering Challenges
+
+- **Handling False 200s:** Alpha Vantage returns HTTP 200 even when an API key is invalid or a rate limit is hit, returning the error in the JSON payload instead. The `MarketDataService` explicitly checks the payload structure to correctly raise custom `RateLimitExceeded` or `ExternalAPIError` exceptions, converting them to proper HTTP 429 and 400/502 status codes for the frontend.
+- **Frontend Modularity Without a Framework:** To keep the footprint small and performant, I eschewed React/Vue in favor of native ES6 modules. This required careful management of DOM element initialization and chart lifecycle events to prevent race conditions during rendering.
+
+## Future Improvements
+- Migrate caching backend from `FileSystemCache` to `Redis` for distributed environments.
+- Implement WebSockets for real-time tick-level data updates.
