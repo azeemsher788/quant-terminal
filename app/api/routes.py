@@ -1,3 +1,4 @@
+import re
 from flask import Blueprint, jsonify, request
 from werkzeug.exceptions import BadRequest
 
@@ -6,13 +7,15 @@ from app.services.market_data import MarketDataService
 
 api_bp = Blueprint('api', __name__)
 
+SYMBOL_REGEX = re.compile(r'^[A-Z0-9\.\-]+$')
+
 @api_bp.route('/market/<symbol>', methods=['GET'])
 @cache.cached(timeout=3600)
 def get_market_data(symbol: str):
     """
     Fetch historical daily market data for a given symbol.
     """
-    if not symbol or not symbol.isalnum():
+    if not symbol or not SYMBOL_REGEX.match(symbol.upper()):
         raise BadRequest("Invalid symbol format.")
         
     symbol = symbol.upper()
@@ -35,6 +38,10 @@ def get_news():
     
     if not tickers:
         raise BadRequest("Invalid tickers format.")
+        
+    invalid_tickers = [t for t in tickers if not SYMBOL_REGEX.match(t)]
+    if invalid_tickers:
+        raise BadRequest(f"Invalid ticker formats found: {', '.join(invalid_tickers)}")
         
     try:
         limit = int(request.args.get('limit', 5))
