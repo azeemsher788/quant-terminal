@@ -16,7 +16,7 @@ class MarketDataService:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
-        retry=retry_if_exception_type((requests.exceptions.Timeout, requests.exceptions.ConnectionError)),
+        retry=retry_if_exception_type((requests.exceptions.Timeout, requests.exceptions.ConnectionError, RateLimitExceeded)),
         reraise=True
     )
     def _make_request(params: Dict[str, Any]) -> Dict[str, Any]:
