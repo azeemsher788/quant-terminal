@@ -4,10 +4,9 @@ from werkzeug.exceptions import BadRequest
 
 from app import cache
 from app.services.market_data import MarketDataService
+from app.utils.validators import parse_ticker_list, parse_int_param
 
 api_bp = Blueprint('api', __name__)
-
-SYMBOL_REGEX = re.compile(r'^[A-Z0-9\.\-]+$')
 
 @api_bp.route('/market/<symbol>', methods=['GET'])
 @cache.cached(timeout=3600)
@@ -15,7 +14,7 @@ def get_market_data(symbol: str):
     """
     Fetch historical daily market data for a given symbol.
     """
-    if not symbol or not SYMBOL_REGEX.match(symbol.upper()):
+    if not symbol or not symbol.isalnum():
         raise BadRequest("Invalid symbol format.")
         
     symbol = symbol.upper()
@@ -33,21 +32,8 @@ def get_news():
       - tickers: comma separated list of tickers (default: AAPL,MSFT,IBM)
       - limit: number of news items to fetch (default: 5, max: 15)
     """
-    tickers_param = request.args.get('tickers', 'AAPL,MSFT,IBM')
-    tickers = [t.strip().upper() for t in tickers_param.split(',') if t.strip()]
-    
-    if not tickers:
-        raise BadRequest("Invalid tickers format.")
-        
-    invalid_tickers = [t for t in tickers if not SYMBOL_REGEX.match(t)]
-    if invalid_tickers:
-        raise BadRequest(f"Invalid ticker formats found: {', '.join(invalid_tickers)}")
-        
-    try:
-        limit = int(request.args.get('limit', 5))
-        limit = min(max(1, limit), 15)
-    except ValueError:
-        raise BadRequest("Invalid limit parameter. Must be an integer.")
+    tickers = parse_ticker_list(request.args.get('tickers', ''), default='AAPL,MSFT,IBM')
+    limit = parse_int_param(request.args.get('limit', ''), default=5, min_val=1, max_val=15)
         
     data = MarketDataService.get_news(tickers, limit)
     
