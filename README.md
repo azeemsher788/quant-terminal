@@ -18,9 +18,9 @@ Financial data APIs (like Alpha Vantage) impose strict rate limits and can be sl
 - **Server-Side Data Caching:** Implements declarative `@cache.cached()` with `Flask-Caching` to handle strict rate limits imposed by public APIs, significantly reducing latency and boilerplate code.
 - **External API Resilience:** Integrates `tenacity` for exponential backoff and retry logic, enabling the service to transparently recover from transient network errors and third-party rate limits.
 - **Strict Request Validation:** Employs a dedicated validation module to parse, clean, and validate all incoming query parameters and inputs, enforcing the Single Responsibility Principle.
-- **Advanced Error Handling:** Gracefully handles and propagates HTTP 429 (Too Many Requests), 500 (Internal Server Error), and network timeouts, providing clear visual feedback to the user via custom error handlers.
-- **High-Performance Visualization:** Integrates TradingView's Lightweight Charts via Canvas API for butter-smooth time-series financial data rendering.
-- **Security Best Practices:** Employs `Flask-Limiter` for endpoint protection and `Flask-Talisman` for HTTP security headers (CSP, HSTS).
+- **Advanced Error Handling & Resilience:** Gracefully handles and propagates HTTP 429 (Too Many Requests), 500 (Internal Server Error), and network timeouts. External API calls utilize exponential backoff (`tenacity`) for transient network instability.
+- **High-Performance Visualization:** Integrates TradingView's Lightweight Charts via Canvas API for butter-smooth time-series financial data rendering, with non-destructive error overlays ensuring canvas stability.
+- **Security Best Practices:** Employs `Flask-Limiter` for endpoint protection and `Flask-Talisman` for HTTP security headers (CSP, HSTS). Strict regex validation prevents malformed API requests.
 - **Modular Frontend Architecture:** Uses native ES6 modules (`api.js`, `chart.js`, `ui.js`) for a clean, maintainable, and dependency-free frontend logic layer.
 
 ## Technology Stack
@@ -93,7 +93,9 @@ pytest tests/
 ## Interesting Engineering Challenges
 
 - **Handling False 200s:** Alpha Vantage returns HTTP 200 even when an API key is invalid or a rate limit is hit, returning the error in the JSON payload instead. The `MarketDataService` explicitly checks the payload structure to correctly raise custom `RateLimitExceeded` or `ExternalAPIError` exceptions, converting them to proper HTTP 429 and 400/502 status codes for the frontend.
-- **Frontend Modularity Without a Framework:** To keep the footprint small and performant, I eschewed React/Vue in favor of native ES6 modules. This required careful management of DOM element initialization and chart lifecycle events to prevent race conditions during rendering.
+- **External API Resilience:** Third-party financial APIs are notoriously flaky. I wrapped critical network calls in exponential backoff decorators (`tenacity`) to ensure the application self-heals from transient connectivity drops before giving up.
+- **Frontend Modularity Without a Framework:** To keep the footprint small and performant, I eschewed React/Vue in favor of native ES6 modules. This required careful management of DOM element initialization and chart lifecycle events to prevent race conditions or canvas destruction during error state rendering.
+- **Strict CI/CD Enforcement:** The GitHub Actions pipeline is configured to enforce strict `flake8` compliance without `--exit-zero`, ensuring all commits adhere to standard style guidelines before merging.
 
 ## Future Improvements
 - Migrate caching backend from `FileSystemCache` to `Redis` for distributed environments.
